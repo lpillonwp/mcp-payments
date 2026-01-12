@@ -1,0 +1,43 @@
+name: E2E (real providers)
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: "e2e mode (smoke or full)"
+        required: true
+        default: "smoke"
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Run E2E (real)
+        env:
+          PAGARME_API_KEY: ${{ secrets.PAGARME_API_KEY }}
+          PAGARME_PUBLIC_KEY: ${{ secrets.PAGARME_PUBLIC_KEY }}
+          WOOVI_APP_ID: ${{ secrets.WOOVI_APP_ID }}
+          WOOVI_BASE_URL: ${{ secrets.WOOVI_BASE_URL }}
+        run: |
+          if [ "${{ inputs.mode }}" = "full" ]; then
+            npm run e2e
+          else
+            npm run e2e:smoke
+          fi
+
+
